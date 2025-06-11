@@ -33,13 +33,11 @@ export async function GET(request: NextRequest) {
           Authorization: `Bearer ${access_token}`,
         },
       });
-  
       const { id: spotify_id, display_name } = userResponse.data;
-  
       // here we are calculating token expiry timestamp (in UNIX time)
       const expires_at = Math.floor(Date.now() / 1000) + expires_in;
-  
-      // upserting this into Supabase
+
+      // upserting this into Supabase - analyze this
       await supabase.from('users').upsert({
         spotify_id,
         display_name,
