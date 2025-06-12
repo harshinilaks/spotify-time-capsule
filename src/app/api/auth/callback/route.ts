@@ -45,10 +45,30 @@ export async function GET(request: NextRequest) {
         refresh_token,
         expires_at,
       }, { onConflict: 'spotify_id' });
+      //replacing hardcoded spotify_id(rn the app is always pulling from the original user's 
+      //token in Supabase. so now, we are going to store the current spotify ID in a cookie.)
+      const res = NextResponse.redirect(`${process.env.NEXT_PUBLIC_SITE_URL}/`);
+      res.cookies.set('spotify_id', spotify_id, {
+        path: '/',
+        httpOnly: false, // frontend needs accesss
+        maxAge: 60 * 60 * 24 * 30, // 30 days
+      });
+
+      return res;
   
-    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_SITE_URL}/success`);
-  } catch (error) {
-    console.error('Error getting Spotify tokens:', error);
+} catch (error: unknown) {
+    if (error instanceof Error) {
+      console.error('OAuth callback error:', {
+        message: error.message,
+        stack: error.stack,
+      });
+    }
+  
+    if (typeof error === 'object' && error && 'response' in error) {
+      const response = (error as any).response?.data;
+      console.error('Spotify API error response:', response);
+    }
+  
     return NextResponse.redirect(`${process.env.NEXT_PUBLIC_SITE_URL}/error`);
   }
 }
