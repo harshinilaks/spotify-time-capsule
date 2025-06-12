@@ -6,6 +6,7 @@ export async function GET(request: NextRequest) {
     'user-read-private',
     'user-top-read',
     'playlist-read-private',
+    'user-read-recently-played'
   ].join(' ');
 
   const params = new URLSearchParams({

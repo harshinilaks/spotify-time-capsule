@@ -9,7 +9,7 @@ import axios from 'axios';
 
 export async function GET(request: NextRequest) {
   // TODO: Replace with dynamic user ID later
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const spotify_id = cookieStore.get('spotify_id')?.value;
 
 if (!spotify_id) {

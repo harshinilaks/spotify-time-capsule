@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
   // TEMP: hardcoded for dev
   //cookies -> allow for application to dynamically use whichever spotify user is 
   //currently authenticated
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const spotify_id = cookieStore.get('spotify_id')?.value;
 
 if (!spotify_id) {
