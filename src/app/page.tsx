@@ -68,6 +68,44 @@ export default function Home() {
     window.location.href = '/api/auth/login';
   };
 
+  const handleSaveSnapshot = async () => {
+    try {
+      const enrichedTracks = tracks.map((track: any) => ({
+        name: track.name,
+        artist: track.artist,
+        albumImage: track.albumImage,
+        url: track.url,
+      }));
+  
+      const payload = {
+        title: prompt('Enter a title for this snapshot:', 'My Vibe') || 'Untitled Snapshot',
+        note: prompt('Add an optional note?') || '',
+        tracks: enrichedTracks,
+        mood: 'chill', // TODO: make this dynamic later!
+        dominant_color: '#f2c94c', // TODO: extract from album art later!
+        vibe_score: 0.8, // placeholder
+      };
+  
+      const res = await fetch('/api/snapshot/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+  
+      const data = await res.json();
+      if (res.ok) {
+        alert('✅ Snapshot saved successfully!');
+      } else {
+        console.error('Snapshot save failed:', data);
+        alert('❌ Failed to save snapshot.');
+      }
+    } catch (err) {
+      console.error('Unexpected error saving snapshot:', err);
+      alert('❌ Something went wrong.');
+    }
+  };
+  
+
   return (
     <main className="flex flex-col items-center py-10 px-6 min-h-screen justify-between">
       <div className="w-full flex flex-col items-center">
@@ -94,6 +132,15 @@ export default function Home() {
           >
             {loading ? 'Loading...' : 'Fetch My Top Tracks'}
           </button>
+
+          {tracks.length > 0 && (
+  <button
+    onClick={handleSaveSnapshot}
+    className="mt-4 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg shadow"
+  >
+    💾 Save Snapshot
+  </button>
+)}
         </div>
 
         {tracks.length === 0 && (
