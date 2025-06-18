@@ -9,6 +9,15 @@ type Track = {
   albumImage: string;
 };
 
+type Snapshot = {
+  id: string;
+  title: string;
+  mood: string;
+  dominant_color: string;
+  created_at: string;
+  tracks: Track[];
+};
+
 type UserProfile = {
   email: string;
   display_name: string;
@@ -16,9 +25,43 @@ type UserProfile = {
 
 export default function Home() {
   const [tracks, setTracks] = useState<Track[]>([]);
+  const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<UserProfile | null>(null);
-  //for my testing recently played route!
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await fetch('/api/spotify/me');
+        const data = await res.json();
+        if (!data.error) setUser(data);
+      } catch (err) {
+        console.error('Failed to fetch user profile:', err);
+      }
+    };
+
+    const fetchSnapshots = async () => {
+      try {
+        const res = await fetch('/api/snapshot/list', {
+          method: 'GET',
+          credentials: 'include', // ✅ include cookie
+        });
+        const data = await res.json();
+        console.log('📦 Snapshot fetch result:', data);
+        if (Array.isArray(data)) setSnapshots(data);
+      } catch (err) {
+        console.error('Error fetching snapshots:', err);
+      }
+    };
+
+    fetchUser();
+    fetchSnapshots();
+  }, []);
+
+  const handleLogin = () => {
+    window.location.href = '/api/auth/login';
+  };
+
   const fetchRecentlyPlayed = async () => {
     setLoading(true);
     try {
@@ -28,7 +71,7 @@ export default function Home() {
         setTracks(data);
       } else {
         console.error('Unexpected response:', data);
-        setTracks([]); // fallback to empty
+        setTracks([]);
       }
     } catch (err) {
       console.error('Failed to fetch recent tracks:', err);
@@ -50,24 +93,6 @@ export default function Home() {
     }
   };
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const res = await fetch('/api/spotify/me');
-        const data = await res.json();
-        if (!data.error) setUser(data);
-      } catch (err) {
-        console.error('Failed to fetch user profile:', err);
-      }
-    };
-
-    fetchUser();
-  }, []);
-
-  const handleLogin = () => {
-    window.location.href = '/api/auth/login';
-  };
-
   const handleSaveSnapshot = async () => {
     try {
       const enrichedTracks = tracks.map((track: any) => ({
@@ -76,25 +101,32 @@ export default function Home() {
         albumImage: track.albumImage,
         url: track.url,
       }));
-  
+
       const payload = {
         title: prompt('Enter a title for this snapshot:', 'My Vibe') || 'Untitled Snapshot',
         note: prompt('Add an optional note?') || '',
         tracks: enrichedTracks,
-        mood: 'chill', // TODO: make this dynamic later!
-        dominant_color: '#f2c94c', // TODO: extract from album art later!
-        vibe_score: 0.8, // placeholder
+        mood: 'chill',
+        dominant_color: '#f2c94c',
+        vibe_score: 0.8,
       };
-  
+
       const res = await fetch('/api/snapshot/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
+        credentials: 'include', // ✅ ensure cookie is sent
       });
-  
+
       const data = await res.json();
       if (res.ok) {
-        alert('✅ Snapshot saved successfully!');
+        alert('✅ Snapshot saved!');
+        const newList = await fetch('/api/snapshot/list', {
+          method: 'GET',
+          credentials: 'include',
+        }).then((r) => r.json());
+        console.log('🆕 Snapshot list after save:', newList);
+        setSnapshots(newList);
       } else {
         console.error('Snapshot save failed:', data);
         alert('❌ Failed to save snapshot.');
@@ -104,27 +136,26 @@ export default function Home() {
       alert('❌ Something went wrong.');
     }
   };
-  
 
   return (
     <main className="flex flex-col items-center py-10 px-6 min-h-screen justify-between">
       <div className="w-full flex flex-col items-center">
         <h1 className="text-4xl font-bold mb-8 text-center">Spotify Time Capsule 🎶</h1>
 
-        <div className="flex gap-4 mb-6">
+        <div className="flex gap-4 mb-6 flex-wrap justify-center">
           <button
             onClick={handleLogin}
             className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg shadow"
           >
             Log in with Spotify
           </button>
-          {/* testing for recently played for the time being */}
+
           <button
             onClick={fetchRecentlyPlayed}
             className="bg-purple-500 hover:bg-purple-600 text-white px-6 py-3 rounded-lg shadow"
           >
-          {loading ? 'Loading...' : 'Recently Played'}
-        </button>
+            {loading ? 'Loading...' : 'Recently Played'}
+          </button>
 
           <button
             onClick={fetchTopTracks}
@@ -134,20 +165,20 @@ export default function Home() {
           </button>
 
           {tracks.length > 0 && (
-  <button
-    onClick={handleSaveSnapshot}
-    className="mt-4 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg shadow"
-  >
-    💾 Save Snapshot
-  </button>
-)}
+            <button
+              onClick={handleSaveSnapshot}
+              className="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-3 rounded-lg shadow"
+            >
+              💾 Save Snapshot
+            </button>
+          )}
         </div>
 
         {tracks.length === 0 && (
-          <p className="text-gray-400">No top tracks found. Start listening on Spotify 🎧</p>
+          <p className="text-gray-400 mb-4">No top tracks found. Start listening on Spotify 🎧</p>
         )}
 
-        <ul className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-3xl">
+        <ul className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-3xl mb-10">
           {tracks.map((track, idx) => (
             <li
               key={idx}
@@ -169,6 +200,36 @@ export default function Home() {
             </li>
           ))}
         </ul>
+
+        {snapshots.length > 0 && (
+          <>
+            <h2 className="text-2xl font-bold mt-12 mb-4">📦 Your Snapshots</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-4xl">
+              {snapshots.map((snap) => (
+                <div
+                  key={snap.id}
+                  className="p-4 rounded-xl shadow-md text-white"
+                  style={{ background: snap.dominant_color || '#333' }}
+                >
+                  <h3 className="text-xl font-semibold">{snap.title || 'Untitled Snapshot'}</h3>
+                  <p className="text-sm text-white/80 italic mb-2">{snap.mood || 'Unknown Mood'}</p>
+                  <p className="text-sm text-white/60 mb-2">
+                    Saved on {new Date(snap.created_at).toLocaleDateString()}
+                  </p>
+                  {Array.isArray(snap.tracks) && snap.tracks.length > 0 && (
+                    <ul className="text-sm list-disc ml-5">
+                      {snap.tracks.slice(0, 3).map((track, i) => (
+                        <li key={i}>
+                          {track.name} — {track.artist}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              ))}
+            </div>
+          </>
+        )}
       </div>
 
       {user && (
