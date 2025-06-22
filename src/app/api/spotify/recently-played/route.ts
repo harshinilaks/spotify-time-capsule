@@ -1,11 +1,11 @@
 export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { getValidSpotifyAccessToken } from '@/utils/getValidSpotifyAccessToken';
 import { cookies } from 'next/headers';
 import axios from 'axios';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   const cookieStore = await cookies();
   const spotify_id = cookieStore.get('spotify_id')?.value;
 
@@ -28,11 +28,25 @@ export async function GET(request: NextRequest) {
       }
     );
 
-    const simplified = response.data.items.map((item: any) => {
+    type SpotifyTrack = {
+      name: string;
+      artists: { name: string }[];
+      external_urls: { spotify: string };
+      album: { images: { url: string }[] };
+    };
+    
+    type SpotifyPlayedItem = {
+      track: SpotifyTrack;
+      played_at: string;
+    };
+    
+    const items: SpotifyPlayedItem[] = response.data.items;
+    
+    const simplified = items.map((item) => {
       const track = item.track;
       return {
         name: track.name,
-        artist: track.artists.map((a: any) => a.name).join(', '),
+        artist: track.artists.map((a) => a.name).join(', '),
         url: track.external_urls.spotify,
         albumImage: track.album.images?.[0]?.url || null,
         playedAt: item.played_at,
@@ -40,14 +54,14 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json(simplified);
-} catch (err: any) {
-    if (err.response) {
+  } catch (err) {
+    if (axios.isAxiosError(err) && err.response) {
       console.error('Spotify API error response:', {
         status: err.response.status,
         data: err.response.data,
       });
     } else {
-      console.error('Error fetching recently played:', err.message);
+      console.error('Error fetching recently played:', (err as Error).message);
     }
   
     return NextResponse.json({ error: 'Spotify API error' }, { status: 500 });

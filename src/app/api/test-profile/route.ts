@@ -1,11 +1,11 @@
 export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { getValidSpotifyAccessToken } from '@/utils/getValidSpotifyAccessToken';
 import axios from 'axios';
 
-export async function GET(request: NextRequest) {
-  const spotify_id = '31jsd23u7wvqeo6wledqa4lfgf6q'; // ← Replace with your actual Spotify ID (you can get it from your Supabase row)
+export async function GET() {
+  const spotify_id = '31jsd23u7wvqeo6wledqa4lfgf6q'; 
 
   const token = await getValidSpotifyAccessToken(spotify_id);
 
@@ -14,15 +14,23 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const profile = await axios.get('https://api.spotify.com/v1/me', {
+    const profileRes = await axios.get('https://api.spotify.com/v1/me', {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
 
-    return NextResponse.json(profile.data);
-  } catch (err: any) {
-    console.error(err);
+    return NextResponse.json(profileRes.data);
+  } catch (err) {
+    if (axios.isAxiosError(err)) {
+      console.error('Spotify API error:', {
+        status: err.response?.status,
+        data: err.response?.data,
+      });
+    } else {
+      console.error('Unknown error:', (err as Error).message);
+    }
+
     return NextResponse.json({ error: 'Spotify API error' }, { status: 500 });
   }
 }

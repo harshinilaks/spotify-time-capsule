@@ -1,12 +1,13 @@
 //this essentially fetches all snapshots for the current useer
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { cookies } from 'next/headers';
 
 export const runtime = 'nodejs';
 
-export async function GET(req: NextRequest) {
-    const cookieStore = cookies();
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function GET() {
+    const cookieStore = await cookies();
     const allCookies = cookieStore.getAll();
     const spotify_id = cookieStore.get('spotify_id')?.value;
     

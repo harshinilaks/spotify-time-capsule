@@ -1,12 +1,11 @@
 export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { getValidSpotifyAccessToken } from '@/utils/getValidSpotifyAccessToken';
-import { supabase } from '@/lib/supabase';
 import { cookies } from 'next/headers';
 import axios from 'axios';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   // TEMP: hardcoded for dev
   //cookies -> allow for application to dynamically use whichever spotify user is 
   //currently authenticated
@@ -33,6 +32,7 @@ if (!spotify_id) {
       id: profileRes.data.id,
     });
   } catch (error) {
+    console.error('Spotify profile fetch failed:', error);
     return NextResponse.json({ error: 'Failed to fetch user profile' }, { status: 500 });
   }
 }
