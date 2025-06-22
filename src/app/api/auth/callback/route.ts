@@ -69,7 +69,13 @@ export async function GET(request: NextRequest) {
     }
 
     if (typeof error === 'object' && error && 'response' in error) {
-      const response = (error as any).response?.data;
+      type ErrorWithResponse = {
+        response?: {
+          data?: unknown;
+        };
+      };
+      
+      const response = (error as ErrorWithResponse).response?.data;
       console.error('Spotify API error response:', response);
     }
 

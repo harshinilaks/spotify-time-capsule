@@ -98,6 +98,7 @@ export default function Home() {
 
   const handleSaveSnapshot = async () => {
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const enrichedTracks = tracks.map((track: any) => ({
         name: track.name,
         artist: track.artist,
