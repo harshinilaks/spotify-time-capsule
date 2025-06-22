@@ -17,10 +17,13 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Missing Spotify ID' }, { status: 401 });
   }
 
+  const now = new Date().toISOString();
+
   const { data, error } = await supabase
     .from('snapshots')
     .select('*')
     .eq('spotify_id', spotify_id)
+    .or(`delivery_date.lte.${now},delivery_date.is.null`) 
     .order('created_at', { ascending: false });
 
   if (error) {

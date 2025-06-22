@@ -15,6 +15,9 @@ type Snapshot = {
   mood: string;
   dominant_color: string;
   created_at: string;
+  note: string;
+  vibe_score: number;
+  delivery_date: string | null;
   tracks: Track[];
 };
 
@@ -102,6 +105,8 @@ export default function Home() {
         url: track.url,
       }));
 
+      const deliveryDateInput = prompt('when do you want this to be delivered? (YYYY-MM-DD)');
+
       const payload = {
         title: prompt('Enter a title for this snapshot:', 'My Vibe') || 'Untitled Snapshot',
         note: prompt('Add an optional note?') || '',
@@ -109,6 +114,7 @@ export default function Home() {
         mood: 'chill',
         dominant_color: '#f2c94c',
         vibe_score: 0.8,
+        delivery_date: deliveryDateInput ? new Date(deliveryDateInput).toISOString() : null,
       };
 
       const res = await fetch('/api/snapshot/create', {
@@ -215,6 +221,18 @@ export default function Home() {
                   <p className="text-sm text-white/80 italic mb-2">{snap.mood || 'Unknown Mood'}</p>
                   <p className="text-sm text-white/60 mb-2">
                     Saved on {new Date(snap.created_at).toLocaleDateString()}
+                  </p>
+                  <p className="text-sm text-white/60 mb-2">
+                   🎨 your color hexcode: {snap.dominant_color}
+                  </p>
+                  <p className="text-sm text-white/60 mb-2">
+                   📝 your note: {snap.note}
+                  </p>
+                  <p className="text-sm text-white/60 mb-2">
+                   💃 danceability: {snap.vibe_score}
+                  </p>
+                  <p className="text-sm text-white/60 mb-2">
+                  Delivery Date: {snap.delivery_date ? new Date(snap.delivery_date).toLocaleDateString() : 'Immediately'}
                   </p>
                   {Array.isArray(snap.tracks) && snap.tracks.length > 0 && (
                     <ul className="text-sm list-disc ml-5">
