@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-
+//updating to use Supabase Auth
 type Track = {
   name: string;
   artist: string;
