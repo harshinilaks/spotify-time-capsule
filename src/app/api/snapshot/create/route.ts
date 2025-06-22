@@ -9,7 +9,7 @@ export const runtime = 'nodejs';
 
 export async function POST(request: NextRequest) {
   try {
-    const cookieStore = cookies();
+    const cookieStore =  await Promise.resolve(cookies());
     const spotify_id = cookieStore.get('spotify_id')?.value;
     if (!spotify_id) {
       return NextResponse.json({ error: 'No Spotify ID found' }, { status: 401 });
