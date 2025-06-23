@@ -14,7 +14,7 @@ type SpotifyTrack = {
 };
 
 export async function GET() {
-  const cookieStore = cookies();
+  const cookieStore =  await Promise.resolve(cookies());
   const spotify_id = cookieStore.get('spotify_id')?.value;
 
   if (!spotify_id) {
